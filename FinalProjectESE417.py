@@ -230,9 +230,16 @@ while(True):
         print("Mean Accuracy Score on Test Data: %0.5f" % score_test)
 
         #SHOW CONFUSION MATRIX FOR NBC (NO REAL GRAPHING TO BE DONE)
+        plt.figure()
         cm = confusion_matrix(te_y,y_pred)
         cm = pd.DataFrame(cm, index=[3,4,5,6,7,8], columns=[3,4,5,6,7,8])
         sns.heatmap(cm,annot=True,annot_kws={"size": 16})
+        plt.show()
+
+        #CORRELATION MAP TO SHOW LACK OF INDEPENDENCE (THIS CAUSES
+        #ASSUMPTION MADE BY NAIVE BAYES CLASSIFICATION FALL APART)
+        plt.figure(figsize=(12,10))
+        sns.heatmap(wine_data.corr(),annot=True, cmap='coolwarm',fmt='.2f')
         plt.show()
 
     elif(choice==4):
