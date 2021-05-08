@@ -25,7 +25,7 @@ def data_normalization(wine):
     return wine
 
 choice = -1
-histo = 0
+histo = True
 while(True):
     choice = int(input("WHICH CLASSIFIER:\n1)Artificial Neural Network"+
                         "\n2)Random Forest"+
@@ -38,25 +38,11 @@ while(True):
     if (choice == 5):
         break
 
-    #bin = 0
-    #while (bin != 1 and bin != 2):
-    #    bin = int(input("DO YOU WANT\n1)BINARY\n2)MULTI-CLASSIFICATION\n\n"))
-
-    #bin = True if(bin == 1) else False
-
     #LOAD DATA FROM CSV
     wine_data = pd.read_csv('winequality-red.csv', sep=",")
 
     #SEPERATE INTO INPUTS (X) AND CLASS LABEL (Y)
     X = wine_data.loc[:,"fixed acidity":"alcohol"]
-
-    #if (bin):
-    #    for i in range(1599):
-    #        if wine_data.iloc[i, -1] > 6:
-    #            wine_data.iloc[i, -1] = 1
-    #        else:
-    #            wine_data.iloc[i,-1] = 0
-        #print(wine_data)
     Y = wine_data.loc[:,"quality"]
 
     #SPLIT INTO TRAINING AND TEST DATA
@@ -68,15 +54,16 @@ while(True):
     columns = pd.DataFrame(X.columns)
     predScores = pd.concat([columns,scores],axis=1)
     predScores.columns = ['Predictor','Score']   #naming the dataframe columns
-    #BEST 8
+    #BEST 6 BASED OFF SCORES
     best = predScores.nlargest(6,'Score')
     print(best)
 
-    #SETTING X EQUAL TO ONLY 8 BEST PREDICTOR FEATURE COLUMNS
+    #SETTING X EQUAL TO ONLY 6 BEST PREDICTOR FEATURE COLUMNS
     X = wine_data.loc[:,best["Predictor"]]
 
     #NEED NUMPY ARRAY FOR NORMALIZATION CALCULATION
     x=np.array(X)
+    #TURN IT BACK INTO A DATA FRAME
     X = pd.DataFrame(data_normalization(x))
 
     #REINITIALIZE WITH NEW X THAT ONLY HAS 8 BEST PREDICTIVE INPUT FEATURES
@@ -84,21 +71,19 @@ while(True):
     score_train = []
     score_test = []
 
-    #plt.figure(figsize=(15,10))
-    #sns.heatmap(wine_data.corr(),annot=True,cmap='coolwarm',fmt='.2f')
-    #plt.show()
-
     #Plotting histogram of each variable (ONLY ON FIRST ITERATION)
-    if (histo==0):
+    if (histo):
         plt.figure()
         wine_data.hist(alpha=0.5, figsize=(15, 10))
         plt.tight_layout()
         plt.show()
-    histo += 1
+        histo = False
 
     if (choice==1):
 
         print("\n\nARTIFICIAL NEURAL NETWORK\n\n")
+        #(#NODES IN FIRST,#NODES IN SECOND) THIS LIST IS USED TO
+        #CROSS VALIDATE AS THIS IS THE PARAMETER WE'RE HYPERTUNING
         layers = [(10,10),(25,25),(50,50),(100,100),(250,250)]
 
         #HYPERTUNING PARAMETERS USING GRID SEARCH METHOD AND MLP CLASSIFIER
@@ -109,12 +94,14 @@ while(True):
         ann = MLPClassifier(max_iter = 500, random_state=420, early_stopping = True)
         cv_ann = GridSearchCV(ann,param_grid=pr_grid)
         cv_ann.fit(tr_x, tr_y)
+
         #PRINT OUT BEST PARAMETERS AND THE SCORE THEY PROVIDED
         print("The best parameters are %s with a score of %0.5f" % (cv_ann.best_params_, cv_ann.best_score_))
         #TEST SCORE
         print("GRID SCORE FOR TEST DATA: %0.5f" % cv_ann.score(te_x,te_y))
 
         #USE BEST PARAMATERS TO TRAIN SKLEARN MODEL THEN PLOT CONFUSION MATRIX
+        #AND PRINT OUT CLASSIFIER SCORES FOR THE BEST PARAMETERS
         mlp = MLPClassifier(activation = cv_ann.best_params_['activation'],
                    solver = 'adam',
                    hidden_layer_sizes = cv_ann.best_params_['hidden_layer_sizes'],
@@ -132,19 +119,21 @@ while(True):
         #CONFUSION MATRIX PLOTTING
         plt.figure()
         cm = confusion_matrix(te_y,y_pred)
-        cm = pd.DataFrame(cm)
+        cm = pd.DataFrame(cm, index=[3,4,5,6,7,8], columns=[3,4,5,6,7,8])
         sns.heatmap(cm,annot=True,annot_kws={"size": 16})
         plt.show()
 
-        #BEST PARAMETERS FOUND FROM HYPERTUNING
+
         layers_index = []
         score_train = []
         score_test = []
 
+        #IN ORDER TO PLOT RESULTS FROM DIFFERENT COMBINATIONS WE ARE
+        #GRAPHING EACH HIDDEN LAYER COMBINATION OF NODES FOR TWO
+        #DIFFERENT ACTIVATIONS FUNCTIONS:(TANH AND LOGISTIC)
         for i in ['tanh','logistic']:
             score_test_sub = []
             score_train_sub = []
-
             for j in layers:
                 MLP = MLPClassifier(activation = i, solver = 'adam',
                                     hidden_layer_sizes = j, max_iter = 500,
@@ -188,7 +177,8 @@ while(True):
         #TEST SCORE
         print("GRID SCORE FOR TEST DATA: "+str(cv_rfr.score(te_x,te_y)*100))
 
-
+        #USE BEST PARAMATERS TO TRAIN SKLEARN MODEL THEN PLOT CONFUSION MATRIX
+        #AND PRINT OUT CLASSIFIER SCORES FOR THE BEST PARAMETERS
         rfr = RandomForestClassifier(random_state=1,criterion='entropy',max_features='log2',
                                     n_estimators=cv_rfr.best_params_['n_estimators'])
         rfr.fit(tr_x,tr_y)
@@ -197,15 +187,12 @@ while(True):
         #GRAPH CONFUSION MATRIX
         plt.figure()
         cm = confusion_matrix(te_y,y_pred)
-        cm = pd.DataFrame(cm)
+        cm = pd.DataFrame(cm, index=[3,4,5,6,7,8], columns=[3,4,5,6,7,8])
         sns.heatmap(cm,annot=True,annot_kws={"size": 16})
         plt.show()
 
-        #BEST PARAMETERS FOUND FROM HYPERTUNING
-        score_train = []
-        score_test = []
+        #PLOTTING ACCURACIES FOR DIFFERENT ESTIMATORS
         for i in estimators:
-
             RFC = RandomForestClassifier(n_estimators=i,
                                         random_state=1,
                                         criterion='entropy',
@@ -241,11 +228,10 @@ while(True):
 
         print("Mean Accuracy Score on Training Data: %0.5f" % score_train)
         print("Mean Accuracy Score on Test Data: %0.5f" % score_test)
-        #print("Accuracy from Metrics Accuracy on Y Predicted vs Y-Test: ",metrics.accuracy_score(te_y,y_pred))
 
-
+        #SHOW CONFUSION MATRIX FOR NBC (NO REAL GRAPHING TO BE DONE)
         cm = confusion_matrix(te_y,y_pred)
-        cm = pd.DataFrame(cm)
+        cm = pd.DataFrame(cm, index=[3,4,5,6,7,8], columns=[3,4,5,6,7,8])
         sns.heatmap(cm,annot=True,annot_kws={"size": 16})
         plt.show()
 
@@ -266,8 +252,24 @@ while(True):
         #TEST SCORE
         print("GRID SCORE FOR TEST DATA: "+str(cv_svm.score(te_x,te_y)*100))
 
-        sub_num = 221
+        #USE BEST PARAMATERS TO TRAIN SKLEARN MODEL THEN PLOT CONFUSION MATRIX
+        #AND PRINT OUT CLASSIFIER SCORES FOR THE BEST PARAMETERS
+        svc = SVC(random_state = 420, max_iter = 500,
+                kernel = cv_svm.best_params_['kernel'],
+                C = cv_svm.best_params_['C'])
+        svc.fit(tr_x,tr_y)
+        y_pred = svc.predict(te_x)
+        score_train = svc.score(tr_x,tr_y)
+        score_test = svc.score(te_x,te_y)
+        print("Mean Accuracy Score on Training Data: ",score_train)
+        print("Mean Accuracy Score on Test Data: ",score_test)
 
+
+        sub_num = 221
+        score_train = []
+        score_test = []
+        #PLOT ALL THE COMBINATIONS OUT OF THE TWO DIFFERENT TYPES OF HYPERPARAMETERS
+        #FOR EACH KERNEL TYPE GRAPH THE ACCURACY FOR EACH C VALUE FROM ARRAY
         for i in kernels:
             score_train_sub = []
             score_test_sub = []
