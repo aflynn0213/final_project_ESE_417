@@ -113,8 +113,8 @@ while(True):
         y_pred = mlp.predict(te_x)
         score_train = mlp.score(tr_x,tr_y)
         score_test = mlp.score(te_x,te_y)
-        print("Mean Accuracy Score on Training Data: ",score_train)
-        print("Mean Accuracy Score on Test Data: ",score_test)
+        print("Mean Accuracy Score on Training Data: %0.5f" % score_train)
+        print("Mean Accuracy Score on Test Data: %0.5f" % score_test)
 
         #CONFUSION MATRIX PLOTTING
         plt.figure()
@@ -175,7 +175,7 @@ while(True):
         #PRINT OUT BEST PARAMETERS AND THE SCORE THEY PROVIDED
         print("The best parameters are %s with a score of %0.5f" % (cv_rfr.best_params_, cv_rfr.best_score_))
         #TEST SCORE
-        print("GRID SCORE FOR TEST DATA: "+str(cv_rfr.score(te_x,te_y)*100))
+        print("GRID SCORE FOR TEST DATA: %0.5f" % (cv_rfr.score(te_x,te_y)*100))
 
         #USE BEST PARAMATERS TO TRAIN SKLEARN MODEL THEN PLOT CONFUSION MATRIX
         #AND PRINT OUT CLASSIFIER SCORES FOR THE BEST PARAMETERS
@@ -257,7 +257,7 @@ while(True):
         #PRINT OUT BEST PARAMETERS AND THE SCORE THEY PROVIDED
         print("The best parameters are %s with a score of %0.5f" % (cv_svm.best_params_, cv_svm.best_score_))
         #TEST SCORE
-        print("GRID SCORE FOR TEST DATA: "+str(cv_svm.score(te_x,te_y)*100))
+        print("GRID SCORE FOR TEST DATA: %0.5f" % cv_svm.score(te_x,te_y)*100)
 
         #USE BEST PARAMATERS TO TRAIN SKLEARN MODEL THEN PLOT CONFUSION MATRIX
         #AND PRINT OUT CLASSIFIER SCORES FOR THE BEST PARAMETERS
@@ -268,8 +268,8 @@ while(True):
         y_pred = svc.predict(te_x)
         score_train = svc.score(tr_x,tr_y)
         score_test = svc.score(te_x,te_y)
-        print("Mean Accuracy Score on Training Data: ",score_train)
-        print("Mean Accuracy Score on Test Data: ",score_test)
+        print("Mean Accuracy Score on Training Data: %0.5f" % score_train)
+        print("Mean Accuracy Score on Test Data: %0.5f" % score_test)
 
 
         sub_num = 221
